@@ -1,0 +1,8 @@
+.idea/
+.vscode/
+cmake-build-*/
+*.whl
+*.egg-info
+build/
+.venv
+device_cfg.xml
