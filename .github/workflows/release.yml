@@ -1,10 +1,14 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - master
+
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Input custom tag name'
+        required: true
+        default: '0.1.0'
+        type: string
 
 jobs:
 
@@ -101,9 +105,11 @@ jobs:
 
   release:
 
-    if: ${{github.ref == 'refs/heads/master'}}
     runs-on: ubuntu-latest
+
     needs: [build-windows, build-linux, build-intel-mac]
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -113,11 +119,29 @@ jobs:
         with:
           path: ${{github.workspace}}/all-wheels
           merge-multiple: true
-          
-      - uses: marvinpinto/action-automatic-releases@v1.2.1
+
+      - name: Create custom tag release
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: ${{secrets.GITHUB_TOKEN}}
-          automatic_release_tag: 'latest'
-          title: 'Latest Build'
+          token: ${{secrets.GITHUB_TOKEN}}
+          tag_name: ${{ github.event.inputs.tag_name }}
+          name: Release ${{ github.event.inputs.tag_name }}
+          body: |
+            Manual build for version ${{ github.event.inputs.tag_name }}
+          draft: false
+          prerelease: false
+          files: |
+            ${{github.workspace}}/all-wheels/*.whl
+
+      - name: Update latest tag release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          tag_name: latest
+          name: Latest Build
+          body: |
+            Automatically synchronized with release ${{ github.event.inputs.tag_name }}
+          draft: false
+          prerelease: false
           files: |
             ${{github.workspace}}/all-wheels/*.whl
