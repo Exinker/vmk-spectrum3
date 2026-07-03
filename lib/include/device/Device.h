@@ -180,7 +180,7 @@ namespace hwlib {
             std::map<std::string, std::future<AssemblyStatus>> futures;
             std::map<std::string, AssemblyStatus> statuses;
             for (auto &a: assemblies) {
-                futures.insert({a->getContext()->assemblyParams.id, pool.submit_task([&] { return a->getAssemblyStatus(); })});
+                futures.emplace(a->getContext()->assemblyParams.id, pool.submit_task([&] { return a->getAssemblyStatus(); }));
             }
             for (auto &[addr, f]: futures) {
                 statuses.insert({addr, f.get()});
@@ -209,6 +209,6 @@ namespace hwlib {
     private:
         std::vector<std::shared_ptr<IAssembly>> assemblies;
         std::map<std::string, AssemblyStatus> assemblyStatuses;
-        BS::thread_pool pool;
+        BS::thread_pool<> pool;
     };
 }

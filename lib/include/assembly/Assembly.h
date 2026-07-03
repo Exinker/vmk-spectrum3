@@ -9,7 +9,6 @@
 #include "filters/PipeFilter.h"
 #include "filters/ContextHolder.h"
 #include "utils/FrameBuffer.h"
-#include <BS_thread_pool_utils.hpp>
 #include "utils/Log.h"
 
 namespace hwlib {

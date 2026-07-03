@@ -1,5 +1,6 @@
 import os
 import re
+import shlex
 import subprocess
 import sys
 
@@ -19,12 +20,20 @@ PLAT_TO_CMAKE = {
 # The name must be the _single_ output extension from the CMake build.
 # If you need multiple extensions, see scikit-build.
 class CMakeExtension(Extension):
+
     def __init__(self, name, sourcedir=""):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
 
 
 class CMakeBuild(build_ext):
+
+    @staticmethod
+    def run_command(command, cwd):
+        print(f"+ cd {cwd}", flush=True)
+        print("+ " + " ".join(shlex.quote(str(arg)) for arg in command), flush=True)
+        subprocess.check_call(command, cwd=cwd)
+
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
 
@@ -113,8 +122,24 @@ class CMakeBuild(build_ext):
         if not os.path.exists(build_temp):
             os.makedirs(build_temp)
 
-        subprocess.check_call(["cmake", ext.sourcedir] + cmake_args, cwd=build_temp)
-        subprocess.check_call(["cmake", "--build", "."] + build_args + ['--target', 'pyspectrum3'], cwd=build_temp)
+        configure_command = ["cmake", ext.sourcedir] + cmake_args + [
+            "-DCMAKE_VERBOSE_MAKEFILE=ON",
+        ]
+        build_command = ["cmake", "--build", "."] + build_args + [
+            "--target",
+            "pyspectrum3",
+            "--verbose",
+        ]
+        if self.compiler.compiler_type == "msvc":
+            build_command += [
+                "--",
+                "/verbosity:minimal",
+                "/flp:logfile=msbuild.log;verbosity=diagnostic",
+            ]
+            # build_command += ["--", "/verbosity:minimal", "/clp:ErrorsOnly"]
+
+        self.run_command(configure_command, build_temp)
+        self.run_command(build_command, build_temp)
 
 
 # The information here can also be placed in setup.cfg - better separation of

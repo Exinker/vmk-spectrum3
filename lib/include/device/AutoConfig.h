@@ -8,7 +8,7 @@ namespace hwlib {
     class AutoConfig {
     public:
         explicit AutoConfig() {
-            broadcastAddr = asio::ip::udp::endpoint(asio::ip::address::from_string(DriverConfig::broadcastAddr),
+            broadcastAddr = asio::ip::udp::endpoint(asio::ip::make_address(DriverConfig::broadcastAddr),
                                                     DriverConfig::udpPort);
             socket.open(asio::ip::udp::v4());
             socket.set_option(asio::socket_base::broadcast(true));
